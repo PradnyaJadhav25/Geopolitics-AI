@@ -1,0 +1,47 @@
+:root {
+  --bs-primary-rgb: 111, 66, 193;
+  --bs-primary: #6f42c1;
+  --bs-info: #0dcaf0;
+  --bs-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+[data-bs-theme="dark"] {
+  --bs-body-bg: #121212;
+  --bs-card-bg: #1e1e1e;
+  --bs-nav-link-color: #dee2e6;
+  --bs-navbar-brand-color: #fff;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding-top: 80px;
+}
+
+
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.btn {
+  border-radius: 0.5rem;
+}
+
+.navbar-brand {
+  background: var(--bs-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.sidebar-heading {
+  font-size: 0.75rem;
+  letter-spacing: .05em;
+}
