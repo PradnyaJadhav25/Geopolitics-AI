@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import api from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { topCountries, recentEvents } from '../data/mockData';
 
@@ -32,6 +33,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function Geopolitics() {
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
+  const [events, setEvents] = useState(recentEvents);
+  useEffect(() => { api.get('/news', { params: { query: selectedCountry + ' geopolitics' } }).then(({ data }) => { if (data.articles?.length) setEvents(data.articles); }).catch(() => {}); }, [selectedCountry]);
   const [timeRange, setTimeRange] = useState(timeRanges[0]);
 
   // Mock stability trend data
@@ -210,7 +213,7 @@ export default function Geopolitics() {
               <h5 className="mb-0 fw-bold">Recent Events Timeline</h5>
             </div>
             <div className="list-group list-group-flush">
-              {recentEvents.map((event) => (
+              {events.map((event) => (
                 <div key={event.id} className="list-group-item px-0 border-0 py-3">
                   <div className="d-flex align-items-start">
                     <span className={`badge bg-${getSentimentColor(event.sentiment)} rounded-circle me-3 mt-1 fs-6`} style={{width: '12px', height: '12px'}}>•</span>

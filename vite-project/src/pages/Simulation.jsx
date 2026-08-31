@@ -1,284 +1,52 @@
-import { useState } from 'react';
-import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { simulationResult } from '../data/mockData';
+﻿import { useState } from 'react';
+import api from '../services/api';
+
+const historicalEvents = ['World War II', 'Cold War', 'Cuban Missile Crisis', 'Soviet Collapse', 'India-China War', 'Russia-Ukraine War', 'Taiwan Crisis', 'Iran-Israel Conflict'];
+const countries = ['India', 'United States', 'China', 'Russia', 'Japan', 'Germany', 'Ukraine', 'Iran', 'Israel'];
 
 export default function Simulation() {
-  const [scenarioName, setScenarioName] = useState('');
-  const [country, setCountry] = useState('India');
-  const [gdpChange, setGdpChange] = useState(0);
-  const [conflictIntensity, setConflictIntensity] = useState('Low');
-  const [tradeRestriction, setTradeRestriction] = useState('None');
-  const [politicalStability, setPoliticalStability] = useState('Stable');
-  const [savedScenarios, setSavedScenarios] = useState([
-    { name: 'India Crisis 2024', date: '2 days ago', confidence: 87 },
-    { name: 'China Trade War', date: '1 week ago', confidence: 92 }
-  ]);
-
-  const [gdpImpact, setGdpImpact] = useState(-3.8)
-  const [recovery, setRecovery] = useState(12)
-  const [chartData, setChartData] = useState([
-    { name:'GDP Impact', value:-12, 
-      fill:'rgba(239,68,68,0.7)' },
-    { name:'Risk Increase', value:32, 
-      fill:'rgba(84,73,214,0.7)' },
-    { name:'Recovery (mo)', value:8, 
-      fill:'rgba(84,73,214,0.7)' },
-    { name:'Volatility', value:25, 
-      fill:'rgba(84,73,214,0.7)' }
-  ])
-
-  const countries = ['India', 'China', 'USA', 'Russia', 'Brazil', 'Germany'];
-  const intensities = ['None', 'Low', 'Medium', 'High', 'Critical'];
-  const tradeLevels = ['None', 'Mild', 'Moderate', 'Severe', 'Complete'];
-  const stabilityLevels = ['Stable', 'Watchlist', 'Declining', 'Unstable', 'Collapse'];
-
-  const runSimulation = () => {
-
-  const gdpVal = parseFloat(gdpChange) || 0
-
-  const conflictMult = 
-    conflictIntensity === 'High' ? 2.5 :
-    conflictIntensity === 'Medium' ? 1.5 : 1
-
-  const tradeMult =
-    tradeRestriction === 'High' ? 2 :
-    tradeRestriction === 'Medium' ? 1.5 :
-    tradeRestriction === 'Low' ? 1.2 : 1
-
-  const stabilityMult =
-    politicalStability === 'Unstable' ? 2 :
-    politicalStability === 'Moderate' ? 1.4 : 1
-
-  const newGdp = parseFloat(
-    ((gdpVal || -3) * conflictMult * -1).toFixed(1)
-  )
-  const newRisk = parseFloat(
-    (Math.abs(gdpVal || 3) * conflictMult 
-     * tradeMult).toFixed(1)
-  )
-  const newRecovery = Math.round(
-    12 * conflictMult * stabilityMult
-  )
-  const newVolatility = parseFloat(
-    (Math.abs(gdpVal || 3) * tradeMult 
-     * 1.5).toFixed(1)
-  )
-
-  setGdpImpact(newGdp)
-  setRecovery(newRecovery)
-
-  setChartData([
-    { 
-      name: 'GDP Impact', 
-      value: newGdp,
-      fill: newGdp < 0 
-        ? 'rgba(239,68,68,0.7)' 
-        : 'rgba(84,73,214,0.7)'
-    },
-    { 
-      name: 'Risk Increase', 
-      value: newRisk,
-      fill: 'rgba(84,73,214,0.7)'
-    },
-    { 
-      name: 'Recovery (mo)', 
-      value: newRecovery,
-      fill: 'rgba(84,73,214,0.7)'
-    },
-    { 
-      name: 'Volatility', 
-      value: newVolatility,
-      fill: 'rgba(84,73,214,0.7)'
+  const [form, setForm] = useState({ eventType: 'historical', historicalEvent: 'World War II', scenarioName: 'Alternative World War II scenario', country: 'India', customPrompt: '', militaryChange: 0, gdpChange: 0, sanctions: false, tradeRestriction: 'None', politicalStability: 'Stable', diplomacyAction: 'Maintain current relations', resourceShock: 'None', technologyChange: 'No change', participatingCountries: ['India'] });
+  const [result, setResult] = useState(null);
+  const [activeFuture, setActiveFuture] = useState(0);
+  const [activeTimeline, setActiveTimeline] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const set = (key, value) => setForm(current => ({ ...current, [key]: value }));
+  const toggleCountry = country => setForm(current => ({ ...current, participatingCountries: current.participatingCountries.includes(country) ? current.participatingCountries.filter(item => item !== country) : [...current.participatingCountries, country] }));
+  const run = async event => {
+    event.preventDefault(); setLoading(true);
+    try { const response = await api.post('/simulations', form); setResult(response.data); setActiveFuture(0); setActiveTimeline(null); }
+    catch (error) {
+      const status = error.response?.status ? ` (${error.response.status})` : '';
+      const detail = error.response?.data?.message || error.response?.data?.detail || error.message;
+      alert(`Unable to run the simulation${status}: ${detail || 'check the Spring Boot and AI services.'}`);
     }
-  ])
-};
+    finally { setLoading(false); }
+  };
+  const future = result?.futures[activeFuture];
+  const risks = result ? Object.entries(result.risks).filter(([key]) => key !== 'overall') : [];
 
-
-
-  return (
-    <div className="row g-5">
-      {/* Form Panel */}
-      <div className="col-lg-4">
-        <div className="card shadow-lg border-0 h-100">
-          <div className="mb-4">
-  <h4 className="text-body fw-semibold mb-1">
-    Scenario Builder
-  </h4>
-  <p className="text-muted mb-0" 
-     style={{fontSize:'13px'}}>
-    Simulate geopolitical events and analyse impact
-  </p>
-</div>
-          <div className="card-body p-4">
-            <div className="mb-3">
-              <label className="form-label fw-bold">Scenario Name</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                placeholder="India-China Border Tension"
-                value={scenarioName}
-                onChange={(e) => setScenarioName(e.target.value)}
-              />
-            </div>
-            <div className="row g-3">
-              <div className="col-12">
-                <label className="form-label fw-bold">Country</label>
-                <select className="form-select" value={country} onChange={(e) => setCountry(e.target.value)}>
-                  {countries.map(c => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-bold">GDP Change %</label>
-                <input 
-                  type="number" 
-                  className="form-control" 
-                  value={gdpChange} 
-                  onChange={(e) => setGdpChange(parseFloat(e.target.value))}
-                  step="0.1"
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-bold">Conflict Intensity</label>
-                <select className="form-select" value={conflictIntensity} onChange={(e) => setConflictIntensity(e.target.value)}>
-                  {intensities.map(i => <option key={i}>{i}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="row g-3 mt-3">
-              <div className="col-md-6">
-                <label className="form-label fw-bold">Trade Restriction</label>
-                <select className="form-select" value={tradeRestriction} onChange={(e) => setTradeRestriction(e.target.value)}>
-                  {tradeLevels.map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-bold">Political Stability</label>
-                <select className="form-select" value={politicalStability} onChange={(e) => setPoliticalStability(e.target.value)}>
-                  {stabilityLevels.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-            </div>
-            <button 
-              className="btn btn-success w-100 mt-4 fw-bold shadow-lg"
-              onClick={runSimulation}
-            >
-              Run Simulation
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Results Panel */}
-      <div className="col-lg-8">
-        <div className="row g-4 mb-4">
-          <div className="col-md-6">
-            <div className="card shadow border-0">
-              <div className="card-body text-center">
-              <h2 className="display-4 fw-bold text-danger mb-1">{gdpImpact}%</h2>
-                <p className="h5 text-muted mb-1">GDP Impact</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="card shadow border-0">
-              <div className="card-body text-center">
-              <h2 className="display-4 fw-bold text-warning mb-1">{recovery} mo</h2>
-                <p className="h5 text-muted mb-1">Recovery</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Outcome Chart */}
-        <div className="card shadow-lg border-0 mb-4">
-          <div className="card-header bg-transparent pb-0">
-            <h5 className="mb-0 fw-bold">Outcome Probabilities</h5>
-          </div>
-          <div className="card-body p-0" style={{height: '400px'}}>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={chartData}>
-                <CartesianGrid 
-                  strokeDasharray="4 4"
-                  stroke="rgba(124,111,212,0.15)"
-                  vertical={true}
-                  horizontal={true}
-                />
-              <XAxis 
-  dataKey="name"
-  tick={{ fill: '#9490c8', fontSize: 11 }}
-  axisLine={{ stroke: 'rgba(124,111,212,0.2)' }}
-  tickLine={{ stroke: 'rgba(124,111,212,0.2)' }}
-  angle={0}
-  interval={0}
-/>
-              <YAxis
-  tick={{ fill: '#9490c8', fontSize: 11 }}
-  axisLine={{ stroke: 'rgba(124,111,212,0.2)' }}
-  tickLine={{ stroke: 'rgba(124,111,212,0.2)' }}
-/>
-                <Tooltip
-  contentStyle={{
-    backgroundColor: '#1e2140',
-    border: '1px solid rgba(124,111,212,0.4)',
-    borderRadius: '10px',
-    color: '#ffffff',
-    padding: '10px 14px',
-    boxShadow: 'none'
-  }}
-  labelStyle={{ 
-    color: '#ffffff', 
-    fontWeight: 600,
-    marginBottom: '4px',
-    fontSize: '13px'
-  }}
-  itemStyle={{ 
-    color: '#a89ef5',
-    fontSize: '13px'
-  }}
-  cursor={{ 
-    fill: 'rgba(124,111,212,0.1)' 
-  }}
-/>
-                <Bar dataKey="value" fill="#667eea" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Saved Scenarios */}
-        <div className="card shadow-lg border-0">
-          <div className="mb-2" style={{borderBottom: '1px solid rgba(124,111,212,0.3)', paddingBottom: '8px', padding: '16px 16px 8px 16px', margin: 0}}>
-            <span className="text-body fw-semibold" style={{fontSize: '15px'}}>
-              Saved Scenarios ({savedScenarios.length})
-            </span>
-          </div>
-          <div className="table-responsive">
-            <table className="table mb-0">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Date</th>
-                  <th>Confidence</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {savedScenarios.map((scenario, index) => (
-                  <tr key={index}>
-                    <td>{scenario.name}</td>
-                    <td>{scenario.date}</td>
-                    <td>{scenario.confidence}%</td>
-                    <td>
-                      <button className="btn btn-outline-primary btn-sm">Load</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <div>
+    <div className="mb-4"><h1 className="h2 fw-bold mb-1">Geopolitical Simulation Engine</h1><p className="text-body-secondary mb-0">Model a historical counterfactual or a future scenario, then compare multiple explainable outcomes.</p></div>
+    <form onSubmit={run} className="card shadow-sm mb-4"><div className="card-body"><div className="row g-3">
+      <div className="col-md-4"><label className="form-label fw-semibold">Scenario source</label><select className="form-select" value={form.eventType} onChange={event => set('eventType', event.target.value)}><option value="historical">Historical event</option><option value="custom">Custom event</option></select></div>
+      {form.eventType === 'historical' ? <div className="col-md-4"><label className="form-label fw-semibold">Historical event</label><select className="form-select" value={form.historicalEvent} onChange={event => set('historicalEvent', event.target.value)}>{historicalEvents.map(item => <option key={item}>{item}</option>)}</select></div> : <div className="col-md-4"><label className="form-label fw-semibold">Scenario title</label><input required className="form-control" value={form.scenarioName} onChange={event => set('scenarioName', event.target.value)} placeholder="What if NATO never existed?" /></div>}
+      <div className="col-md-4"><label className="form-label fw-semibold">Primary country</label><select className="form-select" value={form.country} onChange={event => set('country', event.target.value)}>{countries.map(item => <option key={item}>{item}</option>)}</select></div>
+      <div className="col-12"><label className="form-label fw-semibold">Modified decision / custom instruction</label><textarea required className="form-control" rows="3" value={form.customPrompt} onChange={event => set('customPrompt', event.target.value)} placeholder="Example: Japan attacks California instead of Pearl Harbor. Explain the changed strategy." /></div>
+      <div className="col-md-3"><label className="form-label">Military strength: {form.militaryChange}%</label><input type="range" className="form-range" min="-50" max="50" value={form.militaryChange} onChange={event => set('militaryChange', Number(event.target.value))} /></div>
+      <div className="col-md-3"><label className="form-label">GDP change %</label><input type="number" className="form-control" value={form.gdpChange} onChange={event => set('gdpChange', Number(event.target.value))} /></div>
+      <div className="col-md-3"><label className="form-label">Trade restriction</label><select className="form-select" value={form.tradeRestriction} onChange={event => set('tradeRestriction', event.target.value)}>{['None','Mild','Moderate','Severe','Complete'].map(item => <option key={item}>{item}</option>)}</select></div>
+      <div className="col-md-3"><label className="form-label">Political stability</label><select className="form-select" value={form.politicalStability} onChange={event => set('politicalStability', event.target.value)}>{['Stable','Watchlist','Declining','Unstable','Collapse'].map(item => <option key={item}>{item}</option>)}</select></div>
+      <div className="col-md-4"><label className="form-label">Diplomacy</label><select className="form-select" value={form.diplomacyAction} onChange={event => set('diplomacyAction', event.target.value)}>{['Maintain current relations','Create alliance','Break alliance','Peace treaty','Neutrality'].map(item => <option key={item}>{item}</option>)}</select></div>
+      <div className="col-md-4"><label className="form-label">Resource shock</label><select className="form-select" value={form.resourceShock} onChange={event => set('resourceShock', event.target.value)}>{['None','Oil supply','Food supply','Water','Minerals','Energy'].map(item => <option key={item}>{item}</option>)}</select></div>
+      <div className="col-md-4"><label className="form-label">Technology change</label><select className="form-select" value={form.technologyChange} onChange={event => set('technologyChange', event.target.value)}>{['No change','Faster innovation','Nuclear weapons','Cyber attacks','AI capability','New weapons'].map(item => <option key={item}>{item}</option>)}</select></div>
+      <div className="col-12"><label className="form-label d-block">Participating countries</label>{countries.map(item => <button type="button" key={item} onClick={() => toggleCountry(item)} className={'btn btn-sm me-2 mb-2 ' + (form.participatingCountries.includes(item) ? 'btn-primary' : 'btn-outline-secondary')}>{item}</button>)}</div>
+    </div><div className="d-flex align-items-center gap-3 mt-4"><button className="btn btn-primary px-4" disabled={loading}>{loading ? 'Running world-state simulation…' : 'Run simulation'}</button><small className="text-body-secondary">Produces three futures, a causal timeline, risk scores, and recommendations.</small></div></div></form>
+    {result && <div>
+      <div className="card shadow-sm mb-4"><div className="card-body"><div className="d-flex flex-wrap justify-content-between gap-3"><div><h4 className="mb-1">{result.scenarioSummary.name}</h4><div className="text-body-secondary">Base event: {result.scenarioSummary.baseEvent}</div></div><div className="text-end"><div className="display-6 fw-bold text-primary">{result.confidence}%</div><small className="text-body-secondary">confidence score</small></div></div><p className="mt-3 mb-0"><strong>Modified decision:</strong> {result.scenarioSummary.modifiedDecision}</p></div></div>
+      <div className="row g-4 mb-4">{risks.map(([name, value]) => <div className="col-6 col-md-4 col-lg-2" key={name}><div className="card h-100 text-center"><div className="card-body py-3"><div className={'h3 mb-1 text-' + (value > 70 ? 'danger' : value > 45 ? 'warning' : 'success')}>{value}</div><small className="text-capitalize text-body-secondary">{name} risk</small></div></div></div>)}<div className="col-6 col-md-4 col-lg-2"><div className="card h-100 text-center border-primary"><div className="card-body py-3"><div className="h3 mb-1 text-primary">{result.risks.overall}</div><small className="text-body-secondary">overall risk</small></div></div></div></div>
+      <div className="card shadow-sm mb-4"><div className="card-header bg-transparent"><h5 className="mb-0">Multiple futures</h5></div><div className="card-body"><div className="btn-group mb-4">{result.futures.map((item, index) => <button key={item.label} type="button" onClick={() => setActiveFuture(index)} className={'btn ' + (activeFuture === index ? 'btn-primary' : 'btn-outline-primary')}>{item.label} ({item.probability}%)</button>)}</div><h4>{future.summary}</h4><div className="row g-3 mt-1">{[['Political',future.political],['Military',future.military],['Economic',future.economic],['Trade',future.trade]].map(([title,text]) => <div className="col-md-6" key={title}><div className="border rounded p-3 h-100"><strong>{title} effect</strong><p className="mb-0 mt-1 text-body-secondary">{text}</p></div></div>)}</div><div className="alert alert-primary mt-4 mb-0"><strong>Recommended action:</strong> {future.recommendation}<br /><small><strong>Why:</strong> {future.reasoning}</small></div></div></div>
+      <div className="row g-4"><div className="col-lg-7"><div className="card shadow-sm h-100"><div className="card-header bg-transparent"><h5 className="mb-0">Causal timeline</h5></div><div className="list-group list-group-flush">{result.timeline.map((item,index) => <button type="button" key={item.phase} onClick={() => setActiveTimeline(index)} className={'list-group-item list-group-item-action text-start ' + (activeTimeline === index ? 'active' : '')}><strong>{item.phase}</strong><div>{item.description}</div><small>{item.probability}% probability</small></button>)}</div></div></div><div className="col-lg-5"><div className="card shadow-sm h-100"><div className="card-header bg-transparent"><h5 className="mb-0">Timeline detail</h5></div><div className="card-body">{activeTimeline === null ? <p className="text-body-secondary">Select a timeline node to view why it happens and its impacts.</p> : <><h6>{result.timeline[activeTimeline].phase}</h6><p>{result.timeline[activeTimeline].reason}</p><p><strong>Affected countries:</strong> {result.timeline[activeTimeline].countries.join(', ')}</p><p><strong>Economic:</strong> {result.timeline[activeTimeline].economicImpact}</p><p><strong>Military:</strong> {result.timeline[activeTimeline].militaryImpact}</p><p className="mb-0"><strong>Political:</strong> {result.timeline[activeTimeline].politicalImpact}</p></>}</div></div></div></div>
+      <div className="card shadow-sm mt-4"><div className="card-header bg-transparent"><h5 className="mb-0">Decision recommendation</h5></div><div className="card-body"><div className="row g-3"><div className="col-md-4"><strong>Best action</strong><p>{result.recommendation.bestAction}</p></div><div className="col-md-4"><strong>Alternative</strong><p>{result.recommendation.alternativeAction}</p></div><div className="col-md-4"><strong>Worst decision</strong><p>{result.recommendation.worstDecision}</p></div></div><p className="mb-1"><strong>Benefits:</strong> {result.recommendation.expectedBenefits}</p><p className="mb-0"><strong>Losses:</strong> {result.recommendation.expectedLosses}</p></div></div>
+    </div>}
+  </div>;
 }
-

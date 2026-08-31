@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -16,23 +17,11 @@ export default function Login() {
     setLoading(true);
 
     try {
-      if (email === 'admin@geopolitics.com' && password === 'admin123') {
-        login('jwt_admin_token_456', { name: 'Admin User', role: 'admin' });
-        setTimeout(() => navigate('/dashboard'), 500);
-        return;
-      }
-
-      const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      const user = users.find(u => u.email === email);
-
-      if (user) {
-        login(`jwt_token_${user.email}`, { name: user.name, role: user.role });
-        setTimeout(() => navigate('/dashboard'), 500);
-      } else {
-        setError('No account found. Please register first.');
-      }
+      const { data } = await api.post('/auth/login', { email, password });
+      login(data.accessToken, { name: data.name, email: data.email, role: data.role });
+      navigate('/dashboard');
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError(err.response?.data?.message || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
