@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 export default function Register() {
   const [firstName, setFirstName] = useState('');
@@ -37,18 +38,11 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      const newUser = {
-        name: `${firstName.trim()} ${lastName.trim()}`,
-        email: email.trim(),
-        role: selectedRole,
-        password: password
-      };
-      users.push(newUser);
-      localStorage.setItem('registeredUsers', JSON.stringify(users));
-      navigate('/login');
+      const { data } = await api.post('/auth/register', { name: firstName.trim() + ' ' + lastName.trim(), email: email.trim(), password });
+      login(data.accessToken, { name: data.name, email: data.email, role: data.role });
+      navigate('/dashboard');
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

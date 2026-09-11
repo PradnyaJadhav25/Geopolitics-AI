@@ -102,11 +102,6 @@ export default function Sidebar() {
       </h6>
       <ul className="nav flex-column mb-4">
         <li className="nav-item">
-          <NavLink to="/recommendations" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <i className="bi bi-lightbulb me-2"></i>AI Recommendations
-          </NavLink>
-        </li>
-        <li className="nav-item">
           <NavLink to="/simulation" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <i className="bi bi-play-circle me-2"></i>Simulation
           </NavLink>
@@ -114,6 +109,11 @@ export default function Sidebar() {
         <li className="nav-item">
           <NavLink to="/chatbot" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <i className="bi bi-chat-dots me-2"></i>Chatbot
+          </NavLink>
+        </li>
+        <li className="nav-item">
+          <NavLink to="/knowledge-graph" className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')}>
+            <i className="bi bi-diagram-3 me-2"></i>Knowledge Graph
           </NavLink>
         </li>
       </ul>
@@ -136,6 +136,16 @@ export default function Sidebar() {
             <li className="nav-item">
               <NavLink to="/admin/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <i className="bi bi-people me-2"></i>User Management
+              </NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink to="/admin/events" className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')}>
+                <i className="bi bi-calendar-event me-2"></i>Events
+              </NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink to="/admin/logs" className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')}>
+                <i className="bi bi-journal-text me-2"></i>System Logs
               </NavLink>
             </li>
           </ul>

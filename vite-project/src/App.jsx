@@ -10,12 +10,14 @@ import Compare from './pages/Compare'
 import InternalAffairs from './pages/InternalAffairs'
 import Market from './pages/Market'
 import Funds from './pages/Funds'
-import Recommendations from './pages/Recommendations'
 import Simulation from './pages/Simulation'
 import Chatbot from './pages/Chatbot'
+import KnowledgeGraph from './pages/KnowledgeGraph'
 import AdminSources from './pages/admin/AdminSources'
 import AdminUpload from './pages/admin/AdminUpload'
 import AdminUsers from './pages/admin/AdminUsers'
+import AdminEvents from './pages/admin/AdminEvents'
+import AdminLogs from './pages/admin/AdminLogs'
 import NotFound from './pages/NotFound'
 
 function PrivateRoute({ children }) {
@@ -47,12 +49,14 @@ export default function App() {
               <Route path="/internal-affairs" element={<InternalAffairs />} />
               <Route path="/market" element={<Market />} />
               <Route path="/funds" element={<Funds />} />
-              <Route path="/recommendations" element={<Recommendations />} />
               <Route path="/simulation" element={<Simulation />} />
               <Route path="/chatbot" element={<Chatbot />} />
+              <Route path="/knowledge-graph" element={<KnowledgeGraph />} />
               <Route path="/admin/sources" element={<AdminRoute><AdminSources /></AdminRoute>} />
               <Route path="/admin/upload" element={<AdminRoute><AdminUpload /></AdminRoute>} />
               <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+              <Route path="/admin/events" element={<AdminRoute><AdminEvents /></AdminRoute>} />
+              <Route path="/admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
